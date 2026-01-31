@@ -38,8 +38,8 @@ void SnakeUpdate(snake_t* snake) {
 void SnakeDraw(snake_t snake) { DrawCircleV(snake.pos, 10, ORANGE); }
 
 void StatusDraw(snake_t snake) {
-    const char* s = TextFormat("Score: %4d - Lives: %d - (%.f, %.f)", snake.score, snake.lives,
-                               snake.pos.x, snake.pos.y);
+    const char* s = TextFormat("Score: %4d - Lives: %d - (%.f, %.f) - %3d FPS", snake.score,
+                               snake.lives, snake.pos.x, snake.pos.y, GetFPS());
     const int y = SCREEN_HEIGHT - FONT_SIZE - 5;
     DrawText(s, 10, y, FONT_SIZE, BLACK);
 }
