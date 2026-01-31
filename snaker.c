@@ -41,7 +41,7 @@ void StatusDraw(snake_t snake) {
     const char* s = TextFormat("Score: %4d - Lives: %d - (%.f, %.f) - %3d FPS", snake.score,
                                snake.lives, snake.pos.x, snake.pos.y, GetFPS());
     const int y = SCREEN_HEIGHT - FONT_SIZE - 5;
-    DrawText(s, 10, y, FONT_SIZE, BLACK);
+    DrawText(s, 10, y, FONT_SIZE, WHITE);
 }
 
 int main(void) {
@@ -56,7 +56,7 @@ int main(void) {
 
         BeginDrawing();
 
-        ClearBackground(RAYWHITE);
+        ClearBackground(BLACK);
         StatusDraw(snake);
         SnakeDraw(snake);
 
