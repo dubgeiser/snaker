@@ -7,111 +7,147 @@
 #define FONT_SIZE     30
 #define TARGET_FPS    60
 
-#define SNAKE_SIZE   20.0f
-#define SNAKE_OFFSET SNAKE_SIZE / 2.0f
+#define TILE_SIZE   20.0f
+#define TILE_OFFSET 0.5f * TILE_SIZE
+#define TILE_SIZE_V \
+    (Vector2) { .x = TILE_SIZE, .y = TILE_SIZE }
+#define TOPLEFT(pos) \
+    (Vector2) { .x = pos.x - TILE_OFFSET, .y = pos.y - TILE_OFFSET }
 
-#define NORTH 0
-#define EAST  1
-#define SOUTH 2
-#define WEST  3
+#define UP    0
+#define RIGHT 1
+#define DOWN  2
+#define LEFT  3
 
-int RandomDirection() { return GetRandomValue(0, 3); }
+#define MAX_SNAKE_SIZE 100000
+
+typedef struct {
+    Vector2 pos;
+} Tail;
 
 typedef struct {
     int     score;
     int     lives;
     int     facing;
+    int     size;
     Vector2 pos;
     float   speed;
+    Tail    tail[MAX_SNAKE_SIZE];
 } Snake;
 
 typedef struct {
     Vector2 pos;
 } Food;
 
-Snake SnakeNew() {
-    Snake snake;
-    snake.speed = 2.0f;
-    snake.pos.x = (float)SCREEN_WIDTH / 2;
-    snake.pos.y = (float)SCREEN_HEIGHT / 2;
-    snake.score = 0;
-    snake.lives = 3;
-    snake.facing = RandomDirection();
-    return snake;
+int RandomDirection() { return GetRandomValue(0, 3); }
+
+Vector2 RandomPosition() {
+    Vector2 v;
+    v.x = GetRandomValue(TILE_OFFSET, SCREEN_WIDTH - TILE_OFFSET);
+    v.y = GetRandomValue(TILE_OFFSET, SCREEN_HEIGHT - TILE_OFFSET);
+    return v;
 }
 
 Food FoodNew() {
     Food f;
-    f.pos.x = GetRandomValue(0, SCREEN_WIDTH - SNAKE_OFFSET);
-    f.pos.y = GetRandomValue(0, SCREEN_HEIGHT - SNAKE_OFFSET);
+    f.pos = RandomPosition();
     return f;
 }
 
+void FoodDraw(Food food) { DrawRectangleV(TOPLEFT(food.pos), TILE_SIZE_V, BLUE); }
+
+Snake SnakeNew() {
+    Snake snake;
+    snake.speed = 2.0f;
+    snake.pos.x = 0.5f * SCREEN_WIDTH;
+    snake.pos.y = 0.5f * SCREEN_HEIGHT;
+    snake.score = 0;
+    snake.lives = 3;
+    snake.facing = RandomDirection();
+    snake.size = 0;
+    return snake;
+}
+
+bool SnakeIsOutOfBounds(Snake* snake) {
+    bool out_of_bounds = false;
+    if (snake->pos.x - TILE_OFFSET < 0)
+        out_of_bounds = true;
+    else if (snake->pos.x + TILE_OFFSET > SCREEN_WIDTH)
+        out_of_bounds = true;
+    else if (snake->pos.y - TILE_OFFSET < 0)
+        out_of_bounds = true;
+    else if (snake->pos.y + TILE_OFFSET > SCREEN_HEIGHT)
+        out_of_bounds = true;
+    return out_of_bounds;
+}
+
 bool SnakeEatsFood(Snake* snake, Food* food) {
-    return snake->pos.x >= food->pos.x - SNAKE_OFFSET &&
-           snake->pos.x <= food->pos.x + SNAKE_OFFSET &&
-           snake->pos.y >= food->pos.y - SNAKE_OFFSET &&
-           snake->pos.y <= food->pos.y + SNAKE_OFFSET;
+    // TODO accurate enough?
+    return snake->pos.x >= food->pos.x - TILE_OFFSET &&
+           snake->pos.x <= food->pos.x + TILE_OFFSET &&
+           snake->pos.y >= food->pos.y - TILE_OFFSET &&
+           snake->pos.y <= food->pos.y + TILE_OFFSET;
+}
+
+void SnakeDraw(Snake snake) {
+    DrawRectangleV(TOPLEFT(snake.pos), TILE_SIZE_V, ORANGE);
+    for (int i = snake.size - 1; i >= 0; i--)
+        DrawRectangleV(TOPLEFT(snake.tail[i].pos), TILE_SIZE_V, ORANGE);
+}
+
+void StatusDraw(Snake snake) {
+    const char* s = TextFormat("Score: %4d - Lives: %d - Size: %d - Speed: %.2f - %3d FPS",
+                               snake.score, snake.lives, snake.size, snake.speed, GetFPS());
+    const int   y = SCREEN_HEIGHT - FONT_SIZE - 5;
+    DrawText(s, 10, y, FONT_SIZE, GRAY);
 }
 
 void Update(Snake* snake, Food* food) {
-    if (IsKeyDown(KEY_RIGHT) && (snake->facing == NORTH || snake->facing == SOUTH))
-        snake->facing = EAST;
-    else if (IsKeyDown(KEY_LEFT) && (snake->facing == NORTH || snake->facing == SOUTH))
-        snake->facing = WEST;
-    else if (IsKeyDown(KEY_UP) && (snake->facing == EAST || snake->facing == WEST))
-        snake->facing = NORTH;
-    else if (IsKeyDown(KEY_DOWN) && (snake->facing == EAST || snake->facing == WEST))
-        snake->facing = SOUTH;
+    if (IsKeyDown(KEY_RIGHT) && (snake->facing == UP || snake->facing == DOWN))
+        snake->facing = RIGHT;
+    else if (IsKeyDown(KEY_LEFT) && (snake->facing == UP || snake->facing == DOWN))
+        snake->facing = LEFT;
+    else if (IsKeyDown(KEY_UP) && (snake->facing == RIGHT || snake->facing == LEFT))
+        snake->facing = UP;
+    else if (IsKeyDown(KEY_DOWN) && (snake->facing == RIGHT || snake->facing == LEFT))
+        snake->facing = DOWN;
 
-    if (snake->facing == EAST)
+    int last = snake->size - 1;
+    if (snake->size > 0) {
+        for (int i = 0; i < last; i++) {
+            snake->tail[i].pos = snake->tail[i + 1].pos;
+        }
+        snake->tail[last].pos = snake->pos;
+    }
+    if (snake->facing == RIGHT) {
         snake->pos.x += snake->speed;
-    else if (snake->facing == WEST)
+    } else if (snake->facing == LEFT) {
         snake->pos.x -= snake->speed;
-    else if (snake->facing == NORTH)
+    } else if (snake->facing == UP) {
         snake->pos.y -= snake->speed;
-    else if (snake->facing == SOUTH)
+    } else if (snake->facing == DOWN) {
         snake->pos.y += snake->speed;
+    }
 
-    bool has_collided = false;
-    if (snake->pos.x - SNAKE_OFFSET < 0)
-        has_collided = true;
-    else if (snake->pos.x + SNAKE_OFFSET > SCREEN_WIDTH)
-        has_collided = true;
-    else if (snake->pos.y - SNAKE_OFFSET < 0)
-        has_collided = true;
-    else if (snake->pos.y + SNAKE_OFFSET > SCREEN_HEIGHT)
-        has_collided = true;
-    if (has_collided) {
+    if (SnakeIsOutOfBounds(snake)) {
         snake->lives--;
-        snake->pos.x = (float)SCREEN_WIDTH / 2;
-        snake->pos.y = (float)SCREEN_HEIGHT / 2;
+        snake->pos.x = 0.5f * SCREEN_WIDTH;
+        snake->pos.y = 0.5f * SCREEN_HEIGHT;
         snake->facing = RandomDirection();
+        snake->size = 0;
         return;
     }
 
     if (SnakeEatsFood(snake, food)) {
+        food->pos = RandomPosition();
+        Tail t;
+        t.pos = snake->pos;
+        snake->tail[snake->size++] = t;
         snake->score++;
-        food->pos.x = GetRandomValue(0, SCREEN_WIDTH - SNAKE_OFFSET);
-        food->pos.y = GetRandomValue(0, SCREEN_HEIGHT - SNAKE_OFFSET);
+        if (snake->score % 3 == 0) {
+            snake->speed += .10f;
+        }
     }
-}
-
-void SnakeDraw(Snake snake) {
-    DrawRectangle(snake.pos.x - SNAKE_OFFSET, snake.pos.y - SNAKE_OFFSET, SNAKE_SIZE,
-                  SNAKE_SIZE, ORANGE);
-}
-
-void StatusDraw(Snake snake) {
-    const char* s = TextFormat("Score: %4d - Lives: %d - (%.f, %.f) - %3d FPS", snake.score,
-                               snake.lives, snake.pos.x, snake.pos.y, GetFPS());
-    const int   y = SCREEN_HEIGHT - FONT_SIZE - 5;
-    DrawText(s, 10, y, FONT_SIZE, WHITE);
-}
-
-void FoodDraw(Food food) {
-    DrawRectangle(food.pos.x - SNAKE_OFFSET, food.pos.y - SNAKE_OFFSET, SNAKE_SIZE, SNAKE_SIZE,
-                  BLUE);
 }
 
 int main(void) {
