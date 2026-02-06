@@ -13,6 +13,12 @@
     (Vector2) { .x = TILE_SIZE, .y = TILE_SIZE }
 #define TOPLEFT(pos) \
     (Vector2) { .x = pos.x - TILE_OFFSET, .y = pos.y - TILE_OFFSET }
+#define TOPRIGHT(pos) \
+    (Vector2) { .x = pos.x + TILE_OFFSET, .y = pos.y - TILE_OFFSET }
+#define BOTLEFT(pos) \
+    (Vector2) { .x = pos.x - TILE_OFFSET, .y = pos.y + TILE_OFFSET }
+#define BOTRIGHT(pos) \
+    (Vector2) { .x = pos.x + TILE_OFFSET, .y = pos.y + TILE_OFFSET }
 
 #define UP    0
 #define RIGHT 1
@@ -82,11 +88,22 @@ bool SnakeIsOutOfBounds(Snake* snake) {
 }
 
 bool SnakeEatsFood(Snake* snake, Food* food) {
-    // TODO accurate enough?
-    return snake->pos.x >= food->pos.x - TILE_OFFSET &&
-           snake->pos.x <= food->pos.x + TILE_OFFSET &&
-           snake->pos.y >= food->pos.y - TILE_OFFSET &&
-           snake->pos.y <= food->pos.y + TILE_OFFSET;
+    return TOPLEFT(snake->pos).x < TOPRIGHT(food->pos).x &&
+               TOPLEFT(snake->pos).x > TOPLEFT(food->pos).x &&
+               TOPLEFT(snake->pos).y > TOPLEFT(food->pos).y &&
+               TOPLEFT(snake->pos).y < BOTLEFT(food->pos).y ||
+           TOPRIGHT(snake->pos).x > TOPLEFT(food->pos).x &&
+               TOPRIGHT(snake->pos).x < TOPRIGHT(food->pos).x &&
+               TOPRIGHT(snake->pos).y > TOPLEFT(food->pos).y &&
+               TOPRIGHT(snake->pos).y < BOTLEFT(food->pos).y ||
+           BOTLEFT(snake->pos).x > BOTLEFT(food->pos).x &&
+               BOTLEFT(snake->pos).x < BOTRIGHT(food->pos).x &&
+               BOTLEFT(snake->pos).y > TOPRIGHT(food->pos).y &&
+               BOTLEFT(snake->pos).y < BOTRIGHT(food->pos).y ||
+           BOTRIGHT(snake->pos).x > BOTLEFT(food->pos).x &&
+               BOTRIGHT(snake->pos).x < BOTRIGHT(food->pos).x &&
+               BOTRIGHT(snake->pos).y > TOPLEFT(food->pos).y &&
+               BOTRIGHT(snake->pos).y < BOTLEFT(food->pos).y;
 }
 
 void SnakeDraw(Snake snake) {
