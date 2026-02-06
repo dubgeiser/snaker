@@ -145,7 +145,7 @@ void Update(Snake* snake, Food* food) {
         snake->tail[snake->size++] = t;
         snake->score++;
         if (snake->score % 3 == 0) {
-            snake->speed += .10f;
+            snake->speed += .12f;
         }
     }
 }
