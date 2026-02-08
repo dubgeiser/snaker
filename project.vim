@@ -1,1 +1,1 @@
-map <Leader>t :make!\|:!build/snaker<cr>
+map <Leader>t :wall!\|:make clean\|:make\|:!build/snaker<cr>
