@@ -39,7 +39,7 @@ typedef struct {
     Vector2 pos;
     float   speed;
     // FIXME(Per): Some form of linked list should work and be cleaner
-    Tail    tail[MAX_SNAKE_SIZE];
+    Tail tail[MAX_SNAKE_SIZE];
 } Snake;
 
 typedef struct {
@@ -90,22 +90,22 @@ bool SnakeIsOutOfBounds(Snake* snake) {
 
 bool SnakeEatsFood(Snake* snake, Food* food) {
     // TODO(Per): Can't this be simplified??
-    return TOPLEFT(snake->pos).x < TOPRIGHT(food->pos).x &&
-               TOPLEFT(snake->pos).x > TOPLEFT(food->pos).x &&
-               TOPLEFT(snake->pos).y > TOPLEFT(food->pos).y &&
-               TOPLEFT(snake->pos).y < BOTLEFT(food->pos).y ||
-           TOPRIGHT(snake->pos).x > TOPLEFT(food->pos).x &&
-               TOPRIGHT(snake->pos).x < TOPRIGHT(food->pos).x &&
-               TOPRIGHT(snake->pos).y > TOPLEFT(food->pos).y &&
-               TOPRIGHT(snake->pos).y < BOTLEFT(food->pos).y ||
-           BOTLEFT(snake->pos).x > BOTLEFT(food->pos).x &&
-               BOTLEFT(snake->pos).x < BOTRIGHT(food->pos).x &&
-               BOTLEFT(snake->pos).y > TOPRIGHT(food->pos).y &&
-               BOTLEFT(snake->pos).y < BOTRIGHT(food->pos).y ||
-           BOTRIGHT(snake->pos).x > BOTLEFT(food->pos).x &&
-               BOTRIGHT(snake->pos).x < BOTRIGHT(food->pos).x &&
-               BOTRIGHT(snake->pos).y > TOPLEFT(food->pos).y &&
-               BOTRIGHT(snake->pos).y < BOTLEFT(food->pos).y;
+    return (TOPLEFT(snake->pos).x < TOPRIGHT(food->pos).x &&
+            TOPLEFT(snake->pos).x > TOPLEFT(food->pos).x &&
+            TOPLEFT(snake->pos).y > TOPLEFT(food->pos).y &&
+            TOPLEFT(snake->pos).y < BOTLEFT(food->pos).y) ||
+           (TOPRIGHT(snake->pos).x > TOPLEFT(food->pos).x &&
+            TOPRIGHT(snake->pos).x < TOPRIGHT(food->pos).x &&
+            TOPRIGHT(snake->pos).y > TOPLEFT(food->pos).y &&
+            TOPRIGHT(snake->pos).y < BOTLEFT(food->pos).y) ||
+           (BOTLEFT(snake->pos).x > BOTLEFT(food->pos).x &&
+            BOTLEFT(snake->pos).x < BOTRIGHT(food->pos).x &&
+            BOTLEFT(snake->pos).y > TOPRIGHT(food->pos).y &&
+            BOTLEFT(snake->pos).y < BOTRIGHT(food->pos).y) ||
+           (BOTRIGHT(snake->pos).x > BOTLEFT(food->pos).x &&
+            BOTRIGHT(snake->pos).x < BOTRIGHT(food->pos).x &&
+            BOTRIGHT(snake->pos).y > TOPLEFT(food->pos).y &&
+            BOTRIGHT(snake->pos).y < BOTLEFT(food->pos).y);
 }
 
 void SnakeDraw(Snake snake) {
