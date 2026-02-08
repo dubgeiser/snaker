@@ -38,6 +38,7 @@ typedef struct {
     int     size;
     Vector2 pos;
     float   speed;
+    // FIXME(Per): Some form of linked list should work and be cleaner
     Tail    tail[MAX_SNAKE_SIZE];
 } Snake;
 
@@ -88,6 +89,7 @@ bool SnakeIsOutOfBounds(Snake* snake) {
 }
 
 bool SnakeEatsFood(Snake* snake, Food* food) {
+    // TODO(Per): Can't this be simplified??
     return TOPLEFT(snake->pos).x < TOPRIGHT(food->pos).x &&
                TOPLEFT(snake->pos).x > TOPLEFT(food->pos).x &&
                TOPLEFT(snake->pos).y > TOPLEFT(food->pos).y &&
@@ -155,6 +157,8 @@ void Update(Snake* snake, Food* food) {
         return;
     }
 
+    // TODO(Per): Check collision with snake's self.
+
     if (SnakeEatsFood(snake, food)) {
         food->pos = RandomPosition();
         Tail t;
@@ -162,6 +166,7 @@ void Update(Snake* snake, Food* food) {
         snake->tail[snake->size++] = t;
         snake->score++;
         if (snake->score % 3 == 0) {
+            // TODO(Per): Fine tune speed, .12f is a bit too much.
             snake->speed += .12f;
         }
     }
