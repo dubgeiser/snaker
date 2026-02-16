@@ -125,7 +125,7 @@ void Update(Snake* snake, Food* food) {
 
     if (IsOutOfBounds(snake->head->pos)) {
         // TODO(Per): Shrink snake, reduce to 1 segment?
-        // TODO(Per): Memory managment head and tail.
+        // TODO(Per): Memory management head and tail.
         snake->lives--;
         snake->head->pos = SCREEN_CENTER;
         return;
