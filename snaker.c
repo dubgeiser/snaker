@@ -135,7 +135,10 @@ void Update(Snake* snake, Food* food) {
 
     if (IsCollision(snake->head->pos, food->pos)) {
         Segment* seg = malloc(sizeof(* seg));
-        seg->pos = snake->head->pos;
+
+        // TODO(Per): Deterimine correct position
+        seg->pos = snake->tail->pos;
+
         snake->tail->next = seg;
         seg->prev = snake->tail;
         snake->tail = seg;
