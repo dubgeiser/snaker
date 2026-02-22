@@ -49,6 +49,9 @@ typedef struct Segment {
     struct Segment* next;
 } Segment;
 
+// TODO(Per): Store length instead of segment counts.
+//            We can make the snake grow smoothly and at the length of whatever
+//            the food it ate.
 typedef struct Snake {
     Segment* head;
     Segment* tail;
@@ -58,6 +61,10 @@ typedef struct Snake {
     int      lives;
 } Snake;
 
+// TODO(Per): Bad food: Snake shrinks
+// TODO(Per): Super food: Big growth
+// TODO(Per): Power food: Temporal, fi. going out of bounds
+// TODO(Per): Food shelf life: Food disappears after a while
 typedef struct Food {
     Vector2 position;
 } Food;
@@ -194,6 +201,7 @@ void draw_frame(Snake snake, Food food) {
     DrawRectangleV(TOPLEFT(food.position), TILE_SIZE_V, BLUE);
 }
 
+// TODO(Per): Save / Load high score
 int main(void) {
     const char* title = NAME;
     Snake       snake = snake_new();
