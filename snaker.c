@@ -16,14 +16,14 @@
 #define TILE_SIZE_V \
     (Vector2) { .x = TILE_SIZE, .y = TILE_SIZE }
 
-#define TOPLEFT(pos) \
-    (Vector2) { .x = pos.x - TILE_OFFSET, .y = pos.y - TILE_OFFSET }
-#define TOPRIGHT(pos) \
-    (Vector2) { .x = pos.x + TILE_OFFSET, .y = pos.y - TILE_OFFSET }
-#define BOTLEFT(pos) \
-    (Vector2) { .x = pos.x - TILE_OFFSET, .y = pos.y + TILE_OFFSET }
-#define BOTRIGHT(pos) \
-    (Vector2) { .x = pos.x + TILE_OFFSET, .y = pos.y + TILE_OFFSET }
+#define TOPLEFT(position) \
+    (Vector2) { .x = position.x - TILE_OFFSET, .y = position.y - TILE_OFFSET }
+#define TOPRIGHT(position) \
+    (Vector2) { .x = position.x + TILE_OFFSET, .y = position.y - TILE_OFFSET }
+#define BOTLEFT(position) \
+    (Vector2) { .x = position.x - TILE_OFFSET, .y = position.y + TILE_OFFSET }
+#define BOTRIGHT(position) \
+    (Vector2) { .x = position.x + TILE_OFFSET, .y = position.y + TILE_OFFSET }
 
 #define UP    0
 #define RIGHT 1
@@ -31,7 +31,8 @@
 #define LEFT  3
 
 typedef struct Segment {
-    Vector2         pos;
+    Vector2         position;
+    Vector2         previous_position;
     struct Segment* prev;
     struct Segment* next;
 } Segment;
@@ -46,34 +47,35 @@ typedef struct Snake {
 } Snake;
 
 typedef struct Food {
-    Vector2 pos;
+    Vector2 position;
 } Food;
 
-int RandomDirection() { return GetRandomValue(0, 3); }
+int random_direction() { return GetRandomValue(0, 3); }
 
-Vector2 RandomPosition() {
+Vector2 random_position() {
     Vector2 v;
     v.x = GetRandomValue(TILE_OFFSET, SCREEN_WIDTH - TILE_OFFSET);
     v.y = GetRandomValue(TILE_OFFSET, SCREEN_HEIGHT - TILE_OFFSET);
     return v;
 }
 
-Food FoodNew() {
+Food food_new() {
     Food f;
-    f.pos = RandomPosition();
+    // TODO(Per): Check validity, ie. not on snake!
+    f.position = random_position();
     return f;
 }
 
-Snake SnakeNew() {
-    Segment* head = malloc(sizeof(* head));
-    head->pos = SCREEN_CENTER;
+Snake snake_new() {
+    Segment* head = malloc(sizeof(*head));
+    head->position = SCREEN_CENTER;
     head->prev = 0;
     head->next = 0;
 
     Snake snake = {0};
     snake.score = 0;
     snake.lives = 3;
-    snake.direction = RandomDirection();
+    snake.direction = random_direction();
     snake.speed = 2.0f;
     snake.head = head;
     snake.tail = head;
@@ -81,26 +83,29 @@ Snake SnakeNew() {
     return snake;
 }
 
-bool IsOutOfBounds(Vector2 pos) {
-    bool outOfBounds = false;
-    if (pos.x - TILE_OFFSET < 0)
-        outOfBounds = true;
-    else if (pos.x + TILE_OFFSET > SCREEN_WIDTH)
-        outOfBounds = true;
-    else if (pos.y - TILE_OFFSET < 0)
-        outOfBounds = true;
-    else if (pos.y + TILE_OFFSET > SCREEN_HEIGHT)
-        outOfBounds = true;
-    return outOfBounds;
+bool out_of_bounds(Vector2 position) {
+    bool oobounds = false;
+    if (position.x - TILE_OFFSET < 0)
+        oobounds = true;
+    else if (position.x + TILE_OFFSET > SCREEN_WIDTH)
+        oobounds = true;
+    else if (position.y - TILE_OFFSET < 0)
+        oobounds = true;
+    else if (position.y + TILE_OFFSET > SCREEN_HEIGHT)
+        oobounds = true;
+    return oobounds;
 }
 
-bool IsCollision(Vector2 pos1, Vector2 pos2) {
-    return CheckCollisionRecs(
-        (Rectangle){pos1.x - TILE_OFFSET, pos1.y - TILE_OFFSET, TILE_SIZE, TILE_SIZE},
-        (Rectangle){pos2.x - TILE_OFFSET, pos2.y - TILE_OFFSET, TILE_SIZE, TILE_SIZE});
+Rectangle bounding_rectangle(Vector2 position) {
+    return (Rectangle){position.x - TILE_OFFSET, position.y - TILE_OFFSET, TILE_SIZE,
+                       TILE_SIZE};
 }
 
-void Update(Snake* snake, Food* food) {
+bool collides(Vector2 p1, Vector2 p2) {
+    return CheckCollisionRecs(bounding_rectangle(p1), bounding_rectangle(p2));
+}
+
+void update(Snake* snake, Food* food) {
     if (IsKeyDown(KEY_RIGHT) && (snake->direction == UP || snake->direction == DOWN))
         snake->direction = RIGHT;
     else if (IsKeyDown(KEY_LEFT) && (snake->direction == UP || snake->direction == DOWN))
@@ -110,88 +115,90 @@ void Update(Snake* snake, Food* food) {
     else if (IsKeyDown(KEY_DOWN) && (snake->direction == RIGHT || snake->direction == LEFT))
         snake->direction = DOWN;
 
-    for (Segment* cur = snake->tail; cur && cur->prev; cur = cur->prev)
-        cur->pos = cur->prev->pos;
-
-    if (snake->direction == RIGHT) {
-        snake->head->pos.x += snake->speed;
-    } else if (snake->direction == LEFT) {
-        snake->head->pos.x -= snake->speed;
-    } else if (snake->direction == UP) {
-        snake->head->pos.y -= snake->speed;
-    } else if (snake->direction == DOWN) {
-        snake->head->pos.y += snake->speed;
+    for (Segment* cur = snake->tail; cur && cur->prev; cur = cur->prev) {
+        cur->previous_position = cur->position;
+        cur->position = cur->prev->position;
     }
 
-    if (IsOutOfBounds(snake->head->pos)) {
+    if (snake->direction == RIGHT) {
+        snake->head->position.x += snake->speed;
+    } else if (snake->direction == LEFT) {
+        snake->head->position.x -= snake->speed;
+    } else if (snake->direction == UP) {
+        snake->head->position.y -= snake->speed;
+    } else if (snake->direction == DOWN) {
+        snake->head->position.y += snake->speed;
+    }
+
+    if (out_of_bounds(snake->head->position)) {
         // TODO(Per): Shrink snake, reduce to 1 segment?
         // TODO(Per): Memory management head and tail.
         snake->lives--;
-        snake->head->pos = SCREEN_CENTER;
+        snake->head->position = SCREEN_CENTER;
         return;
     }
 
     // TODO(Per): Check collision with snake's self.
 
-    if (IsCollision(snake->head->pos, food->pos)) {
-        Segment* seg = malloc(sizeof(* seg));
-
-        // TODO(Per): Deterimine correct position
-        seg->pos = snake->tail->pos;
-
+    if (collides(snake->head->position, food->position)) {
+        Segment* seg = malloc(sizeof(*seg));
+        seg->position = snake->tail->previous_position;
         snake->tail->next = seg;
         seg->prev = snake->tail;
-        snake->tail = seg;
         seg->next = 0;
+        snake->tail = seg;
         snake->score++;
 
         // TODO(Per): Fine tune speed: absolute values, percentage, ...
         //            Maybe back off the acceleration when speeds gets higher?
         //            Time based instead of score based?  Both?
-        // TODO(Per): If we check multiple things to determine if and by how much we should
-        //            increase the speed, then this check needs to be taken out of the collision
-        //            detection and we should set a state(boolean) here.
+        // TODO(Per): If we check multiple things to determine if and by how much we
+        // should
+        //            increase the speed, then this check needs to be taken out of
+        //            the collision detection and we should set a state(boolean)
+        //            here.
         if (snake->score % 3 == 0) {
             snake->speed += .12f;
         }
 
-        food->pos = RandomPosition();
+        food->position = random_position();
     }
 }
 
-void DrawFrame(Snake snake, Food food) {
+void draw_frame(Snake snake, Food food) {
+    ClearBackground(BLACK);
+
     const char* s = TextFormat("Score: %4d - Lives: %d - Speed: %.2f - %3d FPS", snake.score,
                                snake.lives, snake.speed, GetFPS());
     const int   y = SCREEN_HEIGHT - FONT_SIZE - 5;
     DrawText(s, 10, y, FONT_SIZE, GRAY);
 
-    DrawRectangleV(TOPLEFT(snake.head->pos), TILE_SIZE_V, ORANGE);
     for (Segment* cur = snake.head; cur != 0; cur = cur->next) {
-        DrawRectangleV(TOPLEFT(cur->pos), TILE_SIZE_V, ORANGE);
+        DrawRectangleV(TOPLEFT(cur->position), TILE_SIZE_V, ORANGE);
     }
 
-    DrawRectangleV(TOPLEFT(food.pos), TILE_SIZE_V, BLUE);
+    DrawRectangleV(TOPLEFT(food.position), TILE_SIZE_V, BLUE);
 }
 
 int main(void) {
     const char* title = NAME;
-
-    Snake snake = SnakeNew();
-    Food  food = FoodNew();
+    Snake       snake = snake_new();
+    Food        food = food_new();
 
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, title);
     SetTargetFPS(TARGET_FPS);
+    HideCursor();
 
     while (!WindowShouldClose()) {
         BeginDrawing();
-        ClearBackground(BLACK);
-        DrawFrame(snake, food);
+        draw_frame(snake, food);
         EndDrawing();
-
-        if (snake.lives == 0) continue;
-
-        Update(&snake, &food);
+        if (snake.lives > 0) update(&snake, &food);
     }
+
+    // TODO(Per): cleanup; head, tail, segments, ...
+
     CloseWindow();
+
     return 0;
 }
