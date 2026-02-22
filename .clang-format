@@ -3,5 +3,6 @@ BasedOnStyle: Google
 AlignAfterOpenBracket: true
 AlignConsecutiveDeclarations: true
 AlignConsecutiveMacros: true
+AllowShortFunctionsOnASingleLine: false
 IndentWidth: 4
 ColumnLimit: 96

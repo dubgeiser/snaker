@@ -6,24 +6,36 @@
 
 #define SCREEN_WIDTH  1024
 #define SCREEN_HEIGHT 768
-#define SCREEN_CENTER \
-    (Vector2) { .x = 0.5f * SCREEN_WIDTH, .y = 0.5f * SCREEN_HEIGHT }
+#define SCREEN_CENTER                                       \
+    (Vector2) {                                             \
+        .x = 0.5f * SCREEN_WIDTH, .y = 0.5f * SCREEN_HEIGHT \
+    }
 #define FONT_SIZE  30
 #define TARGET_FPS 60
 
 #define TILE_SIZE   20.0f
 #define TILE_OFFSET 0.5f * TILE_SIZE
-#define TILE_SIZE_V \
-    (Vector2) { .x = TILE_SIZE, .y = TILE_SIZE }
+#define TILE_SIZE_V                    \
+    (Vector2) {                        \
+        .x = TILE_SIZE, .y = TILE_SIZE \
+    }
 
-#define TOPLEFT(position) \
-    (Vector2) { .x = position.x - TILE_OFFSET, .y = position.y - TILE_OFFSET }
-#define TOPRIGHT(position) \
-    (Vector2) { .x = position.x + TILE_OFFSET, .y = position.y - TILE_OFFSET }
-#define BOTLEFT(position) \
-    (Vector2) { .x = position.x - TILE_OFFSET, .y = position.y + TILE_OFFSET }
-#define BOTRIGHT(position) \
-    (Vector2) { .x = position.x + TILE_OFFSET, .y = position.y + TILE_OFFSET }
+#define TOPLEFT(position)                                            \
+    (Vector2) {                                                      \
+        .x = position.x - TILE_OFFSET, .y = position.y - TILE_OFFSET \
+    }
+#define TOPRIGHT(position)                                           \
+    (Vector2) {                                                      \
+        .x = position.x + TILE_OFFSET, .y = position.y - TILE_OFFSET \
+    }
+#define BOTLEFT(position)                                            \
+    (Vector2) {                                                      \
+        .x = position.x - TILE_OFFSET, .y = position.y + TILE_OFFSET \
+    }
+#define BOTRIGHT(position)                                           \
+    (Vector2) {                                                      \
+        .x = position.x + TILE_OFFSET, .y = position.y + TILE_OFFSET \
+    }
 
 #define UP    0
 #define RIGHT 1
@@ -50,7 +62,9 @@ typedef struct Food {
     Vector2 position;
 } Food;
 
-int random_direction() { return GetRandomValue(0, 3); }
+int random_direction() {
+    return GetRandomValue(0, 3);
+}
 
 Vector2 random_position() {
     Vector2 v;
