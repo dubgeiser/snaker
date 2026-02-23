@@ -6,3 +6,4 @@ AlignConsecutiveMacros: true
 AllowShortFunctionsOnASingleLine: false
 IndentWidth: 4
 ColumnLimit: 96
+IndentCaseLabels: false
