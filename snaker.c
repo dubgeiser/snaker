@@ -61,16 +61,24 @@ typedef struct Snake {
     int      lives;
 } Snake;
 
+#define FOOD_TYPE_GOOD  0
+#define FOOD_TYPE_BAD   1
+#define FOOD_TYPE_SUPER 2
 // TODO(Per): Bad food: Snake shrinks
 // TODO(Per): Super food: Big growth
 // TODO(Per): Power food: Temporal, fi. going out of bounds
 // TODO(Per): Food shelf life: Food disappears after a while
 typedef struct Food {
     Vector2 position;
+    int     type;
 } Food;
 
 int random_direction() {
     return GetRandomValue(0, 3);
+}
+
+int random_food_type() {
+    return GetRandomValue(0, 2);
 }
 
 Vector2 random_position() {
@@ -80,10 +88,17 @@ Vector2 random_position() {
     return v;
 }
 
+void food_reset(Food* f) {
+    // TODO(Per): Check validity, ie. not on snake!
+    f->position = random_position();
+
+    // TODO(Per): This is way too random; it'll spawn too much super and bad foods.
+    f->type = random_food_type();
+}
+
 Food food_new() {
     Food f;
-    // TODO(Per): Check validity, ie. not on snake!
-    f.position = random_position();
+    food_reset(&f);
     return f;
 }
 
@@ -141,15 +156,14 @@ void update(Snake* snake, Food* food) {
         cur->position = cur->prev->position;
     }
 
-    if (snake->direction == RIGHT) {
+    if (snake->direction == RIGHT)
         snake->head->position.x += snake->speed;
-    } else if (snake->direction == LEFT) {
+    else if (snake->direction == LEFT)
         snake->head->position.x -= snake->speed;
-    } else if (snake->direction == UP) {
+    else if (snake->direction == UP)
         snake->head->position.y -= snake->speed;
-    } else if (snake->direction == DOWN) {
+    else if (snake->direction == DOWN)
         snake->head->position.y += snake->speed;
-    }
 
     if (out_of_bounds(snake->head->position)) {
         // TODO(Per): Shrink snake, reduce to 1 segment?
@@ -168,7 +182,19 @@ void update(Snake* snake, Food* food) {
         seg->prev = snake->tail;
         seg->next = 0;
         snake->tail = seg;
-        snake->score++;
+
+        // NOTE(Per): For now this doesn't really do much.
+        //            Need to determine what to do exactly.
+        switch (food->type) {
+        case FOOD_TYPE_GOOD:
+            snake->score++;
+            break;
+        case FOOD_TYPE_SUPER:
+            snake->score += 2;
+            break;
+        case FOOD_TYPE_BAD:
+            break;
+        }
 
         // TODO(Per): Fine tune speed: absolute values, percentage, ...
         //            Maybe back off the acceleration when speeds gets higher?
@@ -182,7 +208,7 @@ void update(Snake* snake, Food* food) {
             snake->speed += .12f;
         }
 
-        food->position = random_position();
+        food_reset(food);
     }
 }
 
@@ -198,7 +224,19 @@ void draw_frame(Snake snake, Food food) {
         DrawRectangleV(TOPLEFT(cur->position), TILE_SIZE_V, ORANGE);
     }
 
-    DrawRectangleV(TOPLEFT(food.position), TILE_SIZE_V, BLUE);
+    Color food_color = BLUE;
+    switch (food.type) {
+    case FOOD_TYPE_GOOD:
+        food_color = YELLOW;
+        break;
+    case FOOD_TYPE_SUPER:
+        food_color = GREEN;
+        break;
+    case FOOD_TYPE_BAD:
+        food_color = RED;
+        break;
+    }
+    DrawRectangleV(TOPLEFT(food.position), TILE_SIZE_V, food_color);
 }
 
 // TODO(Per): Save / Load high score
