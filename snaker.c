@@ -61,13 +61,13 @@ typedef struct Snake {
     int      lives;
 } Snake;
 
-#define FOOD_TYPE_GOOD  0
-#define FOOD_TYPE_BAD   1
-#define FOOD_TYPE_SUPER 2
 // TODO(Per): Bad food: Snake shrinks
 // TODO(Per): Super food: Big growth
 // TODO(Per): Power food: Temporal, fi. going out of bounds
 // TODO(Per): Food shelf life: Food disappears after a while
+#define FOOD_TYPE_GOOD  0
+#define FOOD_TYPE_BAD   1
+#define FOOD_TYPE_SUPER 2
 typedef struct Food {
     Vector2 position;
     int     type;
@@ -77,8 +77,14 @@ int random_direction() {
     return GetRandomValue(0, 3);
 }
 
+static unsigned long food_count = 1;
+
 int random_food_type() {
-    return GetRandomValue(0, 2);
+    food_count++;
+    if (food_count % 10 == 0) {
+        return GetRandomValue(0, 2);
+    }
+    return FOOD_TYPE_GOOD;
 }
 
 Vector2 random_position() {
@@ -176,24 +182,23 @@ void update(Snake* snake, Food* food) {
     // TODO(Per): Check collision with snake's self.
 
     if (collides(snake->head->position, food->position)) {
-        Segment* seg = malloc(sizeof(*seg));
-        seg->position = snake->tail->previous_position;
-        snake->tail->next = seg;
-        seg->prev = snake->tail;
-        seg->next = 0;
-        snake->tail = seg;
-
-        // NOTE(Per): For now this doesn't really do much.
-        //            Need to determine what to do exactly.
-        switch (food->type) {
-        case FOOD_TYPE_GOOD:
+        if (food->type == FOOD_TYPE_GOOD || food->type == FOOD_TYPE_SUPER) {
+            Segment* seg = malloc(sizeof(*seg));
+            seg->position = snake->tail->previous_position;
+            snake->tail->next = seg;
+            seg->prev = snake->tail;
+            seg->next = 0;
+            snake->tail = seg;
             snake->score++;
-            break;
-        case FOOD_TYPE_SUPER:
-            snake->score += 2;
-            break;
-        case FOOD_TYPE_BAD:
-            break;
+            if (food->type == FOOD_TYPE_SUPER)
+                snake->score++;
+        }
+        if (food->type == FOOD_TYPE_BAD) {
+            if (snake->tail->prev) {
+                Segment* tmp = snake->tail->prev;
+                tmp->next = 0;
+                snake->tail = tmp;
+            }
         }
 
         // TODO(Per): Fine tune speed: absolute values, percentage, ...
